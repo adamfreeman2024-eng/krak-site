@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #F8F9FA;
+    --foreground: #1A1A1A;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  /* Правильный способ настройки выделения текста */
+  ::selection {
+    background-color: #E60000;
+    color: white;
+  }
+}
+
+/* Фикс для картинок */
+img {
+  mix-blend-mode: multiply;
+}
