@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/lib/cartStore";
-import { XCircle } from "lucide-react"; // <-- ВОТ ЭТУ СТРОЧКУ НУЖНО ДОБАВИТЬ
+import { XCircle, CheckCircle } from "lucide-react"; 
 
 export default function CartPage() {
   const [lang, setLang] = useState("RU");
   const [promoInput, setPromoInput] = useState("");
   const [discount, setDiscount] = useState(0); 
   const [promoError, setPromoError] = useState("");
-  const [isValidating, setIsValidating] = useState(false); // Для индикации загрузки
+  const [isValidating, setIsValidating] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
@@ -70,8 +70,9 @@ export default function CartPage() {
     RU: {
       cartTitle: "КОРЗИНА", checkoutTitle: "ОФОРМЛЕНИЕ ЗАКАЗА", promoPlaceholder: "ТРОФЕЙНЫЙ ПРОМОКОД", apply: "ПРИМЕНИТЬ",
       invalidPromo: "КОД НЕ НАЙДЕН ИЛИ ИСТЕК", applied: "КОД АКТИВИРОВАН: -", namePlaceholder: "ПОЗЫВНОЙ / ИМЯ", phonePlaceholder: "ТЕЛЕФОН",
-      total: "ИТОГО:", discountLabel: "СКИДКА", send: "ОФОРМИТЬ ЗАКАЗ", sending: "ПЕРЕДАЧА КООРДИНАТ...", success: "ДАННЫЕ ПРИНЯТЫ", error: "ОШИБКА СЕТИ",
-      empty: "АРСЕНАЛ ПУСТ", toShop: "В КАТАЛОГ",
+      total: "ИТОГО:", discountLabel: "СКИДКА", send: "ОФОРМИТЬ ЗАКАЗ", sending: "ПЕРЕДАЧА КООРДИНАТ...", 
+      success: "ЗАКАЗ ПРИНЯТ", successSub: "НАШ ОПЕРАТОР СВЯЖЕТСЯ С ВАМИ В БЛИЖАЙШЕЕ ВРЕМЯ ДЛЯ ПОДТВЕРЖДЕНИЯ ДЕТАЛЕЙ.",
+      error: "ОШИБКА СЕТИ", empty: "АРСЕНАЛ ПУСТ", toShop: "В КАТАЛОГ",
       bundleOffer: "ДОБАВЬТЕ ОПТИКУ И ПОЛУЧИТЕ ЧЕХОЛ + РЕМЕНЬ В ПОДАРОК!",
       bundleActive: "КОМПЛЕКТ АКТИВИРОВАН: ПОДАРКИ ВКЛЮЧЕНЫ!",
       suggestedTitle: "ПОДХОДЯЩАЯ ОПТИКА ДЛЯ ВАШЕЙ СИСТЕМЫ"
@@ -79,8 +80,9 @@ export default function CartPage() {
     AM: {
       cartTitle: "ԶԱՄԲՅՈՒՂ", checkoutTitle: "ՊԱՏՎԵՐԻ ՁԵՎԱԿԵՐՊՈՒՄ", promoPlaceholder: "ՊՐՈՄՈԿՈԴ", apply: "ԿԻՐԱՌԵԼ",
       invalidPromo: "ԿՈԴԸ ՍԽԱԼ Է", applied: "ԿՈԴԸ ԱԿՏԻՎԱՑՎԱԾ Է. -", namePlaceholder: "ԱՆՈՒՆ", phonePlaceholder: "ՀԵՌԱԽՈՍ",
-      total: "ԸՆԴԱՄԵՆԸ:", discountLabel: "ԶԵՂՉ", send: "ՀԱՍՏԱՏԵԼ ՊԱՏՎԵՐԸ", sending: "ՈՒՂԱՐԿՎՈՒՄ Է...", success: "ԸՆԴՈՒՆՎԱԾ Է", error: "ՍԽАԼ",
-      empty: "ԶԱՄԲՅՈՒՂԸ ԴԱՏԱՐԿ Է", toShop: "ԿԱՏԱԼՈԳ",
+      total: "ԸՆԴԱՄԵՆԸ:", discountLabel: "ԶԵՂՉ", send: "ՀԱՍՏԱՏԵԼ ՊԱՏՎԵՐԸ", sending: "ՈՒՂԱՐԿՎՈՒՄ Է...", 
+      success: "ՊԱՏՎԵՐՆ ԸՆԴՈՒՆՎԱԾ Է", successSub: "ՄԵՐ ՄԱՍՆԱԳԵՏԸ ՇՈՒՏՈՎ ԿԿԱՊՎԻ ՁԵԶ ՀԵՏ ՊԱՏՎԵՐԻ ՄԱՆՐԱՄԱՍՆԵՐԸ ՀԱՍՏԱՏԵԼՈՒ ՀԱՄԱՐ:",
+      error: "ՍԽАԼ", empty: "ԶԱМԲՅՈՒՂԸ ԴԱՏԱՐԿ Է", toShop: "ԿԱՏԱԼՈԳ",
       bundleOffer: "ԱՎԵԼԱՑՐԵՔ ՕՊՏԻԿԱ ԵՎ ՍՏԱՑԵՔ ՊԱՏՅԱՆ + ԳՈՏԻ ՆՎԵՐ",
       bundleActive: "ԼՐԱԿԱԶՄԸ ԱԿՏԻՎԱՑՎԱԾ Է. ՆՎԵՐՆԵՐԸ ՆԵՐԱՌՎԱԾ ԵՆ",
       suggestedTitle: "ՀԱՐՄԱՐ ՕՊՏԻԿԱ ՁԵՐ ԶԵՆՔԻ ՀԱՄԱՐ"
@@ -92,7 +94,6 @@ export default function CartPage() {
   const discountAmount = (subTotal * discount) / 100;
   const finalTotal = subTotal - discountAmount;
 
-  // ИНТЕГРАЦИЯ С БАЗОЙ ДАННЫХ (ПРОВЕРКА КОДА)
   const handleApplyPromo = async () => {
     if (!promoInput) return;
     setIsValidating(true);
@@ -137,7 +138,27 @@ export default function CartPage() {
 
   if (!isMounted) return null; 
 
-  if (cartItems.length === 0 && status !== "success") {
+  // --- ЭКРАН ПОДТВЕРЖДЕНИЯ (УБИРАЕТ ВСЁ ОСТАЛЬНОЕ) ---
+  if (status === "success") {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-4 font-sans text-center">
+        <div className="max-w-xl w-full bg-white p-12 shadow-2xl border-t-8 border-green-500 skew-x-[-5deg]">
+          <div className="skew-x-[5deg]">
+            <CheckCircle size={80} className="mx-auto text-green-500 mb-6 animate-pulse" />
+            <h1 className="text-5xl font-black italic uppercase tracking-tighter mb-4 text-black">{cur.success}</h1>
+            <p className="font-bold text-zinc-500 uppercase tracking-widest text-sm mb-10 leading-relaxed">
+              {cur.successSub}
+            </p>
+            <Link href="/catalog" className="inline-block bg-black text-white px-12 py-5 font-black italic uppercase tracking-widest hover:bg-red-600 transition-all skew-x-[-10deg]">
+              {cur.toShop}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center">
         <h1 className="text-6xl font-black italic uppercase text-zinc-300 mb-8">{cur.empty}</h1>
@@ -209,7 +230,6 @@ export default function CartPage() {
           <div className="bg-white border-t-8 border-red-600 p-8 shadow-2xl sticky top-32">
             <h2 className="font-black italic tracking-widest uppercase mb-8 pb-4 border-b-2 border-zinc-100">{cur.checkoutTitle}</h2>
             
-            {/* ПОЛЕ ПРОМОКОДА */}
             <div className="mb-8">
               <div className="flex gap-2">
                 <input 
@@ -247,13 +267,9 @@ export default function CartPage() {
               )}
             </div>
 
-            {status === "success" ? (
-              <div className="w-full bg-green-500 text-white py-5 text-center font-black italic uppercase skew-x-[-5deg] animate-bounce">{cur.success}</div>
-            ) : (
-              <button onClick={handleCheckout} disabled={status === "sending"} className="w-full bg-red-600 text-white py-5 font-black italic uppercase hover:bg-black skew-x-[-5deg] transition-all active:scale-95 shadow-lg">
-                {status === "sending" ? cur.sending : cur.send}
-              </button>
-            )}
+            <button onClick={handleCheckout} disabled={status === "sending"} className="w-full bg-red-600 text-white py-5 font-black italic uppercase hover:bg-black skew-x-[-5deg] transition-all active:scale-95 shadow-lg">
+              {status === "sending" ? cur.sending : cur.send}
+            </button>
           </div>
         </div>
       </div>
