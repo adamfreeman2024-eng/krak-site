@@ -5,17 +5,19 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, phone, items, total, discount } = body;
 
+    // 1. Сначала ПРАВИЛЬНО создаем переменные из настроек
     const TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
     const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-    // --- БЛОК ОТЛАДКИ (Поможет нам найти ошибку в логах) ---
-    console.log("DEBUG: Token exists:", !!TOKEN);
-    console.log("DEBUG: Token length:", TOKEN?.length);
-    console.log("DEBUG: Token starts with:", TOKEN?.substring(0, 5));
-    console.log("DEBUG: Chat ID:", CHAT_ID);
-    // ------------------------------------------------------
+    // 2. Теперь печатаем логи (теперь ошибки не будет)
+    console.log("--- DEBUG START ---");
+    console.log("TOKEN EXISTS:", !!TOKEN);
+    console.log("TOKEN START:", TOKEN?.substring(0, 5));
+    console.log("CHAT_ID:", CHAT_ID);
+    console.log("--- DEBUG END ---");
 
     if (!TOKEN || !CHAT_ID) {
+      console.error("ERROR: Missing config in Vercel settings!");
       return NextResponse.json({ error: 'Конфигурация не найдена' }, { status: 500 });
     }
 
@@ -35,13 +37,13 @@ export async function POST(req: Request) {
     const responseData = await res.json();
 
     if (!res.ok) {
-      console.error("TELEGRAM ERROR:", responseData); // Это покажет точную причину ошибки в логах
+      console.error("TELEGRAM API ERROR:", responseData);
       return NextResponse.json({ error: 'Telegram Error', details: responseData }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("SERVER ERROR:", error.message);
+    console.error("CRITICAL SERVER ERROR:", error.message);
     return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
