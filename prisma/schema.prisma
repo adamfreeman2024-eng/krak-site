@@ -62,7 +62,7 @@ model Category {
 model Brand {
   id        String    @id @default(uuid())
   name      String    @unique
-  logoUrl   String?   
+  logoUrl   String?
   products  Product[]
   createdAt DateTime  @default(now())
 }
@@ -161,6 +161,6 @@ model Leaderboard {
   id        String   @id @default(cuid())
   name      String
   score     Int
-  cashback  Int      
+  cashback  Int     
   createdAt DateTime @default(now())
 }

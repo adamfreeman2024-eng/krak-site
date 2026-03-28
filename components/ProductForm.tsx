@@ -5,6 +5,15 @@ import { createProduct, updateProduct } from "@/lib/actions";
 
 export default function ProductForm({ categories, brands, editItem, onClose }: any) {
   const [loading, setLoading] = useState(false);
+  
+  // Состояние для красивого SEO-слага
+  const [slugValue, setSlugValue] = useState(editItem?.slug || "");
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Автоматически форматируем слаг: маленькие буквы, без пробелов, только латиница
+    const val = e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    setSlugValue(val);
+  };
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -110,8 +119,8 @@ export default function ProductForm({ categories, brands, editItem, onClose }: a
                   <label className="text-[9px] text-zinc-500 uppercase font-black mb-1 block">Фото (Supabase Storage)</label>
                   <input 
                     type="file" 
-                    name="images" // Изменили на images для массива
-                    multiple      // Добавили возможность выбора нескольких файлов
+                    name="images"
+                    multiple      
                     accept="image/*"
                     className="w-full text-[10px] text-zinc-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-zinc-800 file:text-white hover:file:bg-red-600 cursor-pointer" 
                   />
@@ -161,9 +170,28 @@ export default function ProductForm({ categories, brands, editItem, onClose }: a
             </div>
           </div>
 
-          {/* SEO */}
+          {/* SEO (Здесь добавлено поле Slug) */}
           <div className="bg-zinc-900/30 p-6 border border-zinc-900">
             <h4 className="text-zinc-500 font-black text-[10px] uppercase italic mb-4 tracking-widest">Разведка (SEO)</h4>
+            
+            {/* НОВОЕ ПОЛЕ SLUG */}
+            <div className="flex flex-col gap-2 mb-4">
+              <label className="text-[9px] text-zinc-500 uppercase font-black mb-1 block">
+                URL Ссылка (Slug) — krak.am/product/...
+              </label>
+              <input
+                name="slug"
+                type="text"
+                placeholder="saiga-mk-030-762-39"
+                className="w-full bg-black border border-zinc-800 p-3 text-white focus:border-red-600 outline-none transition-all font-mono text-xs"
+                value={slugValue}
+                onChange={handleSlugChange}
+              />
+              <p className="text-[8px] text-zinc-600 italic">
+                * Только латиница, цифры и дефисы. Пробелы заменяются автоматически.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <input name="seoTitle" defaultValue={editItem?.seoTitle} placeholder="SEO Meta Title" className="bg-black border border-zinc-800 p-3 text-white text-[11px] outline-none focus:border-zinc-500" />
               <input name="seoKeywords" defaultValue={editItem?.seoKeywords} placeholder="Keywords (через запятую)" className="bg-black border border-zinc-800 p-3 text-white text-[11px] outline-none focus:border-zinc-500" />

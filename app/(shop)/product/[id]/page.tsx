@@ -76,7 +76,11 @@ export default function ProductPage() {
             setOptics(suggested);
           }
         }
-      } catch (err) { console.error(err); } finally { setLoading(false); }
+      } catch (err) { 
+        console.error(err);
+      } finally { 
+        setLoading(false); 
+      }
     }
     fetchData();
   }, [productId]);
@@ -86,6 +90,7 @@ export default function ProductPage() {
     AM: { back: "[ ESC ] ՎԵՐԱԴԱՌՆԱԼ", specs: "ԲՆՈՒԹԱԳՐԵՐ", order: "ԱՎԵԼԱՑՆԵԼ", added: "ԱՎԵԼԱՑՎԱԾ Է ✓", price: "ԳԻՆ.", desc: "ՆԿԱՐԱԳՐՈՒԹՅՈՒՆ", bundleTitle: "ՏԱԿՏԻԿԱԿԱՆ ՓԱԹԵԹ", bundleText: "ՀՐԱՑԱՆ + ՕՊՏԻԿԱ = ՆՎԵՐ", suggestedTitle: "ԱՌԱՋԱՐԿՎՈՂ ՕՊՏԻԿԱ" },
     EN: { back: "[ ESC ] BACK TO CATALOG", specs: "SPECS", order: "TO ARSENAL", added: "ADDED ✓", price: "PRICE:", desc: "DESCRIPTION", bundleTitle: "TACTICAL BUNDLE", bundleText: "RIFLE + OPTICS = GIFTS", suggestedTitle: "RECOMMENDED OPTICS" }
   };
+
   const t = ui[lang] || ui.RU;
 
   if (loading) return <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center font-mono text-red-600 animate-pulse text-2xl uppercase italic tracking-widest">KRAK_SYNC_PROTOCOL...</div>;
@@ -153,7 +158,11 @@ export default function ProductPage() {
                   <p className="text-5xl font-black italic tracking-tighter">{product.price.toLocaleString()} <span className="text-red-600 text-2xl font-sans">֏</span></p>
                 </div>
                 <button 
-                  onClick={() => { addToCart({ id: product.id, name: getLocalizedName(product), price: product.price, quantity: 1, image: activeImage }); setAdded(true); setTimeout(() => setAdded(false), 1500); }} 
+                  onClick={() => { 
+                    addToCart({ id: product.id, name: getLocalizedName(product), price: product.price, quantity: 1, image: activeImage });
+                    setAdded(true); 
+                    setTimeout(() => setAdded(false), 1500); 
+                  }} 
                   className={`w-full sm:w-auto px-12 py-5 font-black uppercase italic transition-all skew-x-[-5deg] shadow-lg ${added ? "bg-black text-white" : "bg-red-600 text-white hover:bg-black active:scale-95"}`}
                 >
                    <span className="skew-x-[5deg] block">{added ? t.added : t.order}</span>
@@ -169,7 +178,7 @@ export default function ProductPage() {
                </div>
              )}
 
-             <div className="mt-10">
+              <div className="mt-10">
                <h3 className="bg-zinc-200 inline-block px-3 py-1 mb-6 text-[10px] font-black uppercase italic skew-x-[-10deg]">
                  <span className="skew-x-[10deg] block">{t.desc} //</span>
                </h3>
@@ -183,16 +192,16 @@ export default function ProductPage() {
         {/* СЕКЦИЯ РЕКОМЕНДАЦИЙ */}
         {optics.length > 0 && (
           <div className="mt-20 border-t-2 border-zinc-100 pt-20">
-            <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter mb-12">{t.suggestedTitle}</h2>
+             <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter mb-12">{t.suggestedTitle}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {optics.map((opt: any) => (
-                <Link href={`/product/${opt.id}`} key={opt.id} className="bg-white border border-zinc-200 p-8 group hover:border-black transition-all shadow-sm hover:shadow-2xl">
+                <Link href={`/product/${opt.slug || opt.id}`} key={opt.id} className="bg-white border border-zinc-200 p-8 group hover:border-black transition-all shadow-sm hover:shadow-2xl">
                   <div className="h-48 w-full mb-6 flex items-center justify-center overflow-hidden bg-zinc-50 p-4">
                     <img src={opt.images?.[0]} className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform mix-blend-multiply" alt="" />
                   </div>
                   <h4 className="font-black uppercase italic text-sm mb-3 group-hover:text-red-600 transition-colors">{getLocalizedName(opt)}</h4>
                   <p className="text-2xl font-black italic">{opt.price.toLocaleString()} <span className="text-red-600 text-sm">֏</span></p>
-                </Link>
+                 </Link>
               ))}
             </div>
           </div>
@@ -208,13 +217,13 @@ export default function ProductPage() {
 
           {/* Хедер модалки */}
           <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-[120] bg-gradient-to-b from-white/80 to-transparent">
-            <div className="flex flex-col">
+             <div className="flex flex-col">
               <span className="text-red-600 font-black italic text-xs tracking-[0.4em]">SYSTEM_SCAN_DETAILED</span>
               <span className="text-zinc-400 font-mono text-[10px] uppercase mt-2 tracking-widest">
                 {currentIndex + 1} / {images.length} — {getLocalizedName(product)}
               </span>
             </div>
-            <button 
+             <button 
               onClick={() => setIsModalOpen(false)} 
               className="text-black hover:text-red-600 transition-all text-4xl font-light p-4 bg-zinc-100 hover:bg-zinc-200 rounded-full"
             >
@@ -232,13 +241,13 @@ export default function ProductPage() {
                 ‹
               </button>
               <button 
-                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                 onClick={(e) => { e.stopPropagation(); nextImage(); }}
                 className="absolute right-6 md:right-12 z-[120] text-zinc-300 hover:text-black transition-all text-7xl md:text-9xl font-thin hover:scale-110 active:scale-95"
               >
                 ›
               </button>
             </>
-          )}
+           )}
 
           {/* ГЛАВНОЕ ФОТО (ИСПРАВЛЕННЫЙ РЕЖИМ БЕЗ ТЕМНОТЫ) */}
           <div 
@@ -254,7 +263,7 @@ export default function ProductPage() {
             />
           </div>
 
-          {/* Футер модалки */}
+           {/* Футер модалки */}
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-zinc-300 text-[9px] font-black uppercase tracking-[0.6em] hidden md:block">
             TACTICAL_UI_ACTIVE // LIGHT_MODE // KEYBOARD_ARROWS_SUPPORTED
           </div>
