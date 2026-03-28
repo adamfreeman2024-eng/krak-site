@@ -5,51 +5,43 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, phone, items, total, discount } = body;
 
-    // ТЕПЕРЬ МЫ БЕРЕМ ДАННЫЕ ИЗ БЕЗОПАСНОГО ХРАНИЛИЩА
     const TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
     const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-    // Проверка конфигурации (поможет при отладке на Vercel)
+    // --- БЛОК ОТЛАДКИ (Поможет нам найти ошибку в логах) ---
+    console.log("DEBUG: Token exists:", !!TOKEN);
+    console.log("DEBUG: Token length:", TOKEN?.length);
+    console.log("DEBUG: Token starts with:", TOKEN?.substring(0, 5));
+    console.log("DEBUG: Chat ID:", CHAT_ID);
+    // ------------------------------------------------------
+
     if (!TOKEN || !CHAT_ID) {
-      console.error("Критическая ошибка: Секреты Telegram не настроены в Environment Variables!");
-      return NextResponse.json({ error: 'Ошибка конфигурации сервера' }, { status: 500 });
+      return NextResponse.json({ error: 'Конфигурация не найдена' }, { status: 500 });
     }
 
-    let message = `🚀 **НОВЫЙ ЗАКАЗ KRAK.AM**\n\n`;
-    message += `👤 **КЛИЕНТ:** ${name}\n`;
-    message += `📞 **ТЕЛЕФОН:** ${phone}\n\n`;
-    message += `📦 **АРСЕНАЛ:**\n`;
-
+    let message = `🚀 **НОВЫЙ ЗАКАЗ KRAK.AM**\n\n👤 КЛИЕНТ: ${name}\n📞 ТЕЛЕФОН: ${phone}\n\n📦 АРСЕНАЛ:\n`;
     items.forEach((item: any) => {
-      const itemName = item.nameRu || item.nameAm || item.nameEn || item.name || "Товар";
-      message += `• ${itemName} — x${item.quantity}\n`;
+      message += `• ${item.name} — x${item.quantity}\n`;
     });
-
-    if (discount && discount > 0) {
-      message += `\n🎁 **ПРИМЕНЕН ТРОФЕЙНЫЙ КОД: -${discount}%**\n`;
-    }
-
-    message += `\n💰 **ИТОГО К ОПЛАТЕ: ${Number(total).toLocaleString()} ֏**`;
+    if (discount > 0) message += `\n🎁 СКИДКА: -${discount}%\n`;
+    message += `\n💰 ИТОГО: ${total} ֏`;
 
     const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown',
-      }),
+      body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'Markdown' }),
     });
 
+    const responseData = await res.json();
+
     if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Ошибка Telegram API:", errorData);
-      return NextResponse.json({ error: 'Ошибка Telegram' }, { status: 500 });
+      console.error("TELEGRAM ERROR:", responseData); // Это покажет точную причину ошибки в логах
+      return NextResponse.json({ error: 'Telegram Error', details: responseData }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Внутренняя ошибка API:", error.message);
-    return NextResponse.json({ error: 'Внутренняя ошибка' }, { status: 500 });
+    console.error("SERVER ERROR:", error.message);
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

@@ -610,28 +610,26 @@ export default function RangePage() {
     const [promoCode, setPromoCode] = useState('');
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-    const fetchTop = async () => {
-      try {
-        const res = await fetch('/api/leaderboard');
-        
-        // Проверяем, что запрос прошел успешно
-        if (!res.ok) {
-           console.warn("API ответил с ошибкой:", res.status);
-           return;
-        }
+    // Добавь это внутрь function RangePage() { ... }
 
-        const data = await res.json();
-        
-        // Проверяем, что пришел массив, а не ошибка
-        if (data && Array.isArray(data)) {
-            setLeaderboard(data);
-        } else if (data.error) {
-            console.error("Ошибка из API:", data.error);
-        }
-      } catch (err) {
-        console.error("Критическая ошибка загрузки ТОПа:", err);
+const fetchTop = async () => {
+    try {
+      const res = await fetch('/api/leaderboard');
+      
+      // Проверка: если сервер ответил ошибкой, не пытаемся читать JSON
+      if (!res.ok) {
+          console.warn("API временно недоступно");
+          return;
       }
-    };
+  
+      const data = await res.json();
+      if (data && !data.error) {
+          setLeaderboard(data);
+      }
+    } catch (err) {
+      console.error("Ошибка загрузки ТОПа:", err);
+    }
+  };
 
     const handleGameOver = useCallback((s: number, cb: number) => {
         engineRef.current?.stop();
