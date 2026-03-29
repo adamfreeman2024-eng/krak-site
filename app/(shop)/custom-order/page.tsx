@@ -94,27 +94,38 @@ export default function CustomOrderPage() {
     setLoading(true);
     try {
       const uploadedUrls = [];
-      // Загрузка в Supabase
+      
+      // 1. Загрузка фото в Supabase
       for (const file of files) {
         const fileName = `custom-${Date.now()}-${file.name}`;
         const { data, error } = await supabase.storage.from('product-images').upload(fileName, file);
         if (!error) {
           const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
           uploadedUrls.push(publicUrl);
+        } else {
+          console.error("Ошибка загрузки фото:", error);
         }
       }
       
-      // Отправка в наш новый API
+      // 2. Отправка в наш API Telegram
       const res = await fetch("/api/custom-order", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, images: uploadedUrls }),
       });
       
-      if (res.ok) setIsSuccess(true);
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка отправки. Попробуйте позже.");
+      // 3. Жесткая проверка ответа от сервера
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Сервер вернул ошибку. Возможно, не настроен Telegram API.");
+      }
+      
+      // 4. Если всё успешно:
+      setIsSuccess(true);
+      
+    } catch (err: any) {
+      console.error("ОШИБКА ОТПРАВКИ:", err);
+      alert(`⚠️ ОШИБКА: ${err.message}\nУбедитесь, что серверный файл API существует и ключи Telegram (.env) прописаны!`);
     } finally {
       setLoading(false);
     }

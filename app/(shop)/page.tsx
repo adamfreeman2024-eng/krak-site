@@ -1,11 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 export default function HomePage() {
   const [lang, setLang] = useState("RU");
   const [brands, setBrands] = useState<any[]>([]);
+  
+  // --- СОСТОЯНИЯ ДЛЯ УМНОГО ПОИСКА ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLang(localStorage.getItem("lang") || "RU");
@@ -13,14 +20,13 @@ export default function HomePage() {
     window.addEventListener("languageChange", handleStorage);
     window.addEventListener("storage", handleStorage);
 
-    // Загрузка брендов из базы данных
+    // Загрузка брендов
     fetch('/api/brands')
       .then(res => res.json())
       .then(data => {
         if (data && data.length > 0) {
           setBrands(data);
         } else {
-          // Запасной план (пока в базе ничего нет)
           setBrands([
             { name: "BENELLI" }, { name: "BERETTA" }, { name: "FRANCHI" }, 
             { name: "BLASER" }, { name: "HECKLER & KOCH" }, { name: "DANIEL DEFENSE" }, 
@@ -35,15 +41,50 @@ export default function HomePage() {
         ]);
       });
 
+    // Загрузка всех товаров для быстрого умного поиска
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        if (data.products) setAllProducts(data.products);
+        else if (Array.isArray(data)) setAllProducts(data);
+      })
+      .catch(err => console.error("Ошибка загрузки арсенала:", err));
+
+    // Закрытие поиска при клике вне его области
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       window.removeEventListener("languageChange", handleStorage);
       window.removeEventListener("storage", handleStorage);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Логика фильтрации поиска
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      const q = searchQuery.toLowerCase();
+      const filtered = allProducts.filter(p => 
+        p.nameRu?.toLowerCase().includes(q) || 
+        p.nameEn?.toLowerCase().includes(q) || 
+        p.nameAm?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q)
+      ).slice(0, 5); // Показываем топ-5 совпадений
+      setSearchResults(filtered);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, allProducts]);
 
   const t: any = {
     RU: {
       heroTitle: "ПРОФЕССИОНАЛЬНЫЙ АРСЕНАЛ", heroSub: "ОРУЖИЕ, ОПТИКА И ЭКИПИРОВКА ПРЕМИУМ КЛАССА", toCatalog: "ОТКРЫТЬ КАТАЛОГ", brandsTitle: "ОФИЦИАЛЬНЫЙ ПАРТНЕР",
+      searchPlaceholder: "ПОИСК ПО АРСЕНАЛУ (НАЗВАНИЕ ИЛИ SKU)...", searchEmpty: "ОБЪЕКТ НЕ НАЙДЕН",
       servicesTitle: "ПРОФЕССИОНАЛЬНЫЕ УСЛУГИ",
       wsTitle: "ОРУЖЕЙНАЯ МАСТЕРСКАЯ", wsItems: ["Ремонт и обслуживание", "Глубокая чистка и уход", "Тюнинг и кастомизация", "Замена деталей"],
       balTitle: "БАЛЛИСТИКА И СНАЙПИНГ", balItems: ["Пристрелка оружия", "Настройка оптики", "Тактическая стрельба", "Баллистические расчеты"],
@@ -52,6 +93,7 @@ export default function HomePage() {
     },
     AM: {
       heroTitle: "ՊՐՈՖԵՍԻՈՆԱԼ ԱՐՍԵՆԱԼ", heroSub: "ՊՐԵՄԻՈՒՄ ԴԱՍԻ ԶԵՆՔ, ՕՊՏԻԿԱ ԵՎ ՀԱՆԴԵՐՁԱՆՔ", toCatalog: "ԲԱՑԵԼ ԿԱՏԱԼՈԳԸ", brandsTitle: "ՊԱՇՏՈՆԱԿԱՆ ԳՈՐԾԸՆԿԵՐ",
+      searchPlaceholder: "ՓՆՏՐԵԼ ԱՐՍԵՆԱԼՈՒՄ...", searchEmpty: "ՕԲՅԵԿՏԸ ՉԻ ԳՏՆՎԵԼ",
       servicesTitle: "ՊՐՈՖԵՍԻՈՆԱԼ ԾԱՌԱՅՈՒԹՅՈՒՆՆԵՐ",
       wsTitle: "ԶԵՆՔԻ ԱՐՀԵՍՏԱՆՈՑ", wsItems: ["Վերանորոգում և սպասարկում", "Խորը մաքրում և խնամք", "Թյունինգ և կաստոմիզացիա", "Պահեստամասերի փոխարինում"],
       balTitle: "ԲԱԼԻՍՏԻԿԱ ԵՎ ՍՆԱՅՊԻՆԳ", balItems: ["Զենքի նշանառում", "ՕպՏիկայի կարգավորում", "Տակտիկական հրաձգություն", "Բալիստիկ հաշվարկներ"],
@@ -60,6 +102,7 @@ export default function HomePage() {
     },
     EN: {
       heroTitle: "PROFESSIONAL ARSENAL", heroSub: "PREMIUM FIREARMS, OPTICS & TACTICAL GEAR", toCatalog: "OPEN CATALOG", brandsTitle: "OFFICIAL PARTNER",
+      searchPlaceholder: "SEARCH ARSENAL (NAME OR SKU)...", searchEmpty: "OBJECT NOT FOUND",
       servicesTitle: "PROFESSIONAL SERVICES",
       wsTitle: "GUNSMITH WORKSHOP", wsItems: ["Repair & Maintenance", "Deep Cleaning", "Tuning & Customization", "Parts Replacement"],
       balTitle: "BALLISTICS & SNIPING", balItems: ["Firearm Zeroing", "Optics Setup", "Tactical Shooting", "Ballistic Calculations"],
@@ -68,6 +111,8 @@ export default function HomePage() {
     }
   };
   const cur = t[lang] || t.RU;
+
+  const getLocalizedName = (p: any) => lang === "AM" ? p.nameAm : (lang === "EN" ? (p.nameEn || p.nameRu) : p.nameRu);
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen text-black font-sans selection:bg-red-600 selection:text-white pb-10">
@@ -93,6 +138,64 @@ export default function HomePage() {
           <p className="text-zinc-500 font-black text-sm md:text-lg uppercase tracking-widest max-w-2xl mb-10 border-l-4 border-red-600 pl-4">
             {cur.heroSub}
           </p>
+
+          {/* --- ИНТЕЛЛЕКТУАЛЬНЫЙ ПОИСК --- */}
+          <div className="relative w-full max-w-2xl mb-10 z-50" ref={searchRef}>
+            <div className="relative flex items-center shadow-2xl skew-x-[-5deg]">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
+                }}
+                onFocus={() => setIsSearchFocused(true)}
+                placeholder={cur.searchPlaceholder}
+                className="w-full bg-white border-2 border-transparent focus:border-red-600 px-6 py-5 text-black font-black uppercase italic outline-none text-sm md:text-base transition-colors"
+              />
+              <div className="absolute right-6 text-red-600 font-black">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
+            </div>
+
+            {/* ВЫПАДАЮЩИЙ СПИСОК РЕЗУЛЬТАТОВ */}
+            {isSearchFocused && searchQuery.length > 1 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-zinc-200 shadow-2xl skew-x-[-5deg] overflow-hidden">
+                <div className="skew-x-[5deg]">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((p) => (
+                      <Link 
+                        href={`/product/${p.slug || p.id}`} 
+                        key={p.id}
+                        onClick={() => setIsSearchFocused(false)}
+                        className="flex items-center gap-4 p-4 border-b border-zinc-100 hover:bg-zinc-50 transition-colors group"
+                      >
+                        <div className="w-12 h-12 bg-zinc-100 flex items-center justify-center shrink-0 overflow-hidden">
+                          {p.images?.[0] ? (
+                            <img src={p.images[0]} alt="" className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform" />
+                          ) : (
+                            <span className="text-[8px] text-zinc-400 font-black">NO PIC</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-black font-black uppercase italic text-xs md:text-sm group-hover:text-red-600 transition-colors line-clamp-1">{getLocalizedName(p)}</p>
+                          {p.sku && <p className="text-zinc-400 font-mono text-[9px] uppercase tracking-widest">{p.sku}</p>}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-red-600 font-black italic">{p.price.toLocaleString()} ֏</p>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="p-6 text-center text-zinc-400 font-black uppercase italic tracking-widest text-sm">
+                      {cur.searchEmpty}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <Link href="/catalog" className="inline-block bg-red-600 text-white px-12 py-5 font-black uppercase italic tracking-widest hover:bg-black transition-all shadow-2xl skew-x-[-10deg] active:scale-95">
             <span className="skew-x-[10deg] block">{cur.toCatalog}</span>
           </Link>
@@ -100,7 +203,7 @@ export default function HomePage() {
       </section>
 
       {/* --- БЕГУЩАЯ СТРОКА БРЕНДОВ --- */}
-      <section className="w-full bg-black text-white py-8 border-y-4 border-red-600 overflow-hidden flex items-center relative">
+      <section className="w-full bg-black text-white py-8 border-y-4 border-red-600 overflow-hidden flex items-center relative z-10">
         <div className="absolute z-20 bg-black/90 px-4 py-8 md:px-10 border-r-4 border-red-600 hidden md:block backdrop-blur-md h-full flex items-center">
            <p className="text-[10px] font-mono font-black tracking-widest uppercase text-zinc-400">{cur.brandsTitle}</p>
         </div>
@@ -110,14 +213,12 @@ export default function HomePage() {
              <Link 
                 href={`/catalog?brand=${brand.name}`} 
                 key={i} 
-                // Убраны огромные отступы (px-8 py-4 -> px-4 py-2) и добавлена минимальная ширина
                 className="flex-shrink-0 flex items-center justify-center h-16 md:h-24 min-w-[140px] md:min-w-[180px] bg-white px-4 py-2 border-b-4 border-transparent hover:border-red-600 group cursor-pointer transition-all shadow-xl"
              >
                {brand.logoUrl ? (
                  <img 
                    src={brand.logoUrl} 
                    alt={brand.name} 
-                   // max-h-full и max-w-full заставляют картинку занять 90% белого бейджа
                    className="max-h-full max-w-full object-contain group-hover:scale-110 transition-all duration-300"
                  />
                ) : (
