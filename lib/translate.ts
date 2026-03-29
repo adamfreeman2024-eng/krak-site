@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 const dictionary: Record<string, { ru: string; en: string }> = {
   "ՍԱԻԳԱ": { ru: "Сайга", en: "Saiga" },

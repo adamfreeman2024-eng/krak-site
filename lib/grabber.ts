@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 const TARGET_CATEGORY_ID = "cmmsa40dd0004e1uc83kmcsbk";
 
 const rawData = [
