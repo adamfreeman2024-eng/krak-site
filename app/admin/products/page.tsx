@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import AdminContent from "./AdminContent";
-
+export const dynamic = 'force-dynamic';
 export default async function ProductsAdminPage() {
   // 1. Загружаем товары сразу с их категориями и брендами
   const products = await prisma.product.findMany({

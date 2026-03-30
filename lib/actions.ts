@@ -62,7 +62,8 @@ export async function createProduct(formData: FormData) {
       revalidatePath("/admin/products");
       revalidatePath("/catalog");
     } catch (error) { 
-      console.error("Ошибка при создании товара:", error);
+      console.error("❌ КРИТИЧЕСКАЯ ОШИБКА ПРИ СОЗДАНИИ ТОВАРА:", error);
+      throw new Error("Не удалось создать товар в базе данных."); // Теперь ошибка не пройдет незамеченной!
     }
 }
 
@@ -112,7 +113,8 @@ export async function updateProduct(formData: FormData) {
       revalidatePath("/admin/products");
       revalidatePath("/catalog");
     } catch (error) { 
-      console.error("Ошибка при обновлении товара:", error);
+      console.error("❌ КРИТИЧЕСКАЯ ОШИБКА ПРИ ОБНОВЛЕНИИ ТОВАРА:", error);
+      throw new Error("Не удалось обновить товар. Возможно, выбран удаленный бренд."); // Жесткий контроль ошибок
     }
 }
 

@@ -106,7 +106,7 @@ function CatalogContent() {
     // ФИЛЬТР ПО БРЕНДУ
     if (activeBrand) {
       const brandUpper = activeBrand.toUpperCase();
-      const pBrand = (product.brand || "").toUpperCase();
+      const pBrand = (product.brand?.name || "").toUpperCase();
       const pName = getLocalizedName(product).toUpperCase();
       
       // Ищем либо точное совпадение в поле brand, либо упоминание в названии

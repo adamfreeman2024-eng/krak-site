@@ -56,8 +56,25 @@ export default function ProductPage() {
       try {
         const res = await fetch(`/api/products/${productId}?t=${Date.now()}`);
         const data = await res.json();
+        
         if (data && !data.error) {
-          setProduct(data);
+          
+          // --- ИЩЕМ ЛОГОТИП БРЕНДА ---
+          let matchedBrand = null;
+          if (typeof data.brand === 'object' && data.brand !== null) {
+            matchedBrand = data.brand;
+          } else if (typeof data.brand === 'string' && data.brand.trim() !== "") {
+            try {
+              const brandsRes = await fetch('/api/brands');
+              const brandsData = await brandsRes.json();
+              // Ищем точное совпадение (игнорируя случайные пробелы по краям)
+              matchedBrand = brandsData.find((b: any) => b.name?.trim().toUpperCase() === data.brand?.trim().toUpperCase()) || { name: data.brand.trim() };
+            } catch(e) {
+              matchedBrand = { name: data.brand.trim() };
+            }
+          }
+
+          setProduct({ ...data, brandObj: matchedBrand });
           if (data.images?.length > 0) setActiveImage(data.images[0]);
 
           // Проверка на оружие для рекомендации оптики
@@ -142,50 +159,69 @@ export default function ProductPage() {
 
           {/* ИНФОРМАЦИЯ */}
           <div className="flex flex-col justify-center">
-             <div className="flex items-center gap-4 mb-4">
-               <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white ${!product.requiresLicense ? 'bg-zinc-800' : 'bg-red-600'}`}>
-                 {!product.requiresLicense ? "FREE ACCESS" : "LICENSE REQ"}
-               </span>
-               <p className="text-zinc-400 font-mono text-[10px] tracking-widest uppercase">ID: {product.id.slice(-8).toUpperCase()}</p>
-             </div>
+              
+              {/* БРЕНД, ЛИЦЕНЗИЯ И ID */}
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                
+                {/* ЛОГОТИП ИЛИ БЕЙДЖ БРЕНДА */}
+                {product.brandObj && (
+                  <Link href={`/catalog?brand=${product.brandObj.name}`} className="mr-2 hover:opacity-70 transition-opacity">
+                    {product.brandObj.logoUrl ? (
+                      <img src={product.brandObj.logoUrl} alt={product.brandObj.name} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
+                    ) : (
+                      <span className="bg-black text-white px-3 py-1.5 text-[10px] md:text-xs font-black tracking-widest uppercase italic skew-x-[-10deg] inline-block shadow-md">
+                        <span className="skew-x-[10deg] block">{product.brandObj.name}</span>
+                      </span>
+                    )}
+                  </Link>
+                )}
 
-             <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none mb-8">{getLocalizedName(product)}</h1>
-             
-             {/* ЦЕНА И КОРЗИНА */}
-             <div className="bg-white border-l-8 border-red-600 p-8 mb-6 shadow-2xl flex flex-col sm:flex-row justify-between items-center gap-6">
-                <div>
-                  <p className="text-zinc-400 text-[10px] font-black uppercase mb-2 tracking-widest">{t.price}</p>
-                  <p className="text-5xl font-black italic tracking-tighter">{product.price.toLocaleString()} <span className="text-red-600 text-2xl font-sans">֏</span></p>
-                </div>
-                <button 
-                  onClick={() => { 
-                    addToCart({ id: product.id, name: getLocalizedName(product), price: product.price, quantity: 1, image: activeImage });
-                    setAdded(true); 
-                    setTimeout(() => setAdded(false), 1500); 
-                  }} 
-                  className={`w-full sm:w-auto px-12 py-5 font-black uppercase italic transition-all skew-x-[-5deg] shadow-lg ${added ? "bg-black text-white" : "bg-red-600 text-white hover:bg-black active:scale-95"}`}
-                >
-                   <span className="skew-x-[5deg] block">{added ? t.added : t.order}</span>
-                </button>
-             </div>
+                {/* БЕЙДЖ ЛИЦЕНЗИИ */}
+                <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white ${!product.requiresLicense ? 'bg-zinc-800' : 'bg-red-600'}`}>
+                  {!product.requiresLicense ? "FREE ACCESS" : "LICENSE REQ"}
+                </span>
+                
+                {/* ID */}
+                <p className="text-zinc-400 font-mono text-[10px] tracking-widest uppercase mt-1 md:mt-0">ID: {product.id.slice(-8).toUpperCase()}</p>
+              </div>
 
-             {optics.length > 0 && (
-               <div className="bg-black text-white p-4 mb-10 skew-x-[-5deg] border-r-4 border-red-600 animate-pulse">
-                 <div className="skew-x-[5deg] flex items-center gap-4">
-                   <div className="bg-red-600 text-white px-2 py-1 font-black text-[10px] uppercase italic">{t.bundleTitle}</div>
-                   <p className="font-black italic text-xs md:text-sm uppercase tracking-widest">{t.bundleText}</p>
+              <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none mb-8">{getLocalizedName(product)}</h1>
+              
+              {/* ЦЕНА И КОРЗИНА */}
+              <div className="bg-white border-l-8 border-red-600 p-8 mb-6 shadow-2xl flex flex-col sm:flex-row justify-between items-center gap-6">
+                 <div>
+                   <p className="text-zinc-400 text-[10px] font-black uppercase mb-2 tracking-widest">{t.price}</p>
+                   <p className="text-5xl font-black italic tracking-tighter">{product.price.toLocaleString()} <span className="text-red-600 text-2xl font-sans">֏</span></p>
                  </div>
-               </div>
-             )}
+                 <button 
+                   onClick={() => { 
+                     addToCart({ id: product.id, name: getLocalizedName(product), price: product.price, quantity: 1, image: activeImage });
+                     setAdded(true); 
+                     setTimeout(() => setAdded(false), 1500); 
+                   }} 
+                   className={`w-full sm:w-auto px-12 py-5 font-black uppercase italic transition-all skew-x-[-5deg] shadow-lg ${added ? "bg-black text-white" : "bg-red-600 text-white hover:bg-black active:scale-95"}`}
+                 >
+                    <span className="skew-x-[5deg] block">{added ? t.added : t.order}</span>
+                 </button>
+              </div>
 
-              <div className="mt-10">
-               <h3 className="bg-zinc-200 inline-block px-3 py-1 mb-6 text-[10px] font-black uppercase italic skew-x-[-10deg]">
-                 <span className="skew-x-[10deg] block">{t.desc} //</span>
-               </h3>
-               <div className="prose prose-sm max-w-none text-zinc-700 font-bold uppercase leading-relaxed selection:bg-red-600 selection:text-white" 
-                 dangerouslySetInnerHTML={{ __html: lang === 'AM' ? product.descriptionAm : (lang === 'EN' ? (product.descriptionEn || product.descriptionRu) : product.descriptionRu) }} 
-               />
-             </div>
+              {optics.length > 0 && (
+                <div className="bg-black text-white p-4 mb-10 skew-x-[-5deg] border-r-4 border-red-600 animate-pulse">
+                  <div className="skew-x-[5deg] flex items-center gap-4">
+                    <div className="bg-red-600 text-white px-2 py-1 font-black text-[10px] uppercase italic">{t.bundleTitle}</div>
+                    <p className="font-black italic text-xs md:text-sm uppercase tracking-widest">{t.bundleText}</p>
+                  </div>
+                </div>
+              )}
+
+               <div className="mt-10">
+                <h3 className="bg-zinc-200 inline-block px-3 py-1 mb-6 text-[10px] font-black uppercase italic skew-x-[-10deg]">
+                  <span className="skew-x-[10deg] block">{t.desc} //</span>
+                </h3>
+                <div className="prose prose-sm max-w-none text-zinc-700 font-bold uppercase leading-relaxed selection:bg-red-600 selection:text-white" 
+                  dangerouslySetInnerHTML={{ __html: lang === 'AM' ? product.descriptionAm : (lang === 'EN' ? (product.descriptionEn || product.descriptionRu) : product.descriptionRu) }} 
+                />
+              </div>
           </div>
         </div>
 
