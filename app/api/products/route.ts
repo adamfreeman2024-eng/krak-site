@@ -15,7 +15,7 @@ export async function GET() {
       where: { isActive: true },
       include: {
         category: true,
-        brand: true // <--- ВОТ ЭТА СТРОЧКА ВКЛЮЧИТ ФИЛЬТРЫ В КАТАЛОГЕ
+        brand: true // <--- ВОТ ЭТА СТРОЧКА ВКЛЮЧИТ ФИЛЬТРЫ В КАТАЛОГЕ ok
       }
     });
 
