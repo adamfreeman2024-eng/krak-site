@@ -134,9 +134,12 @@ export default function HomePage() {
           </p>
           
           {/* Адаптивный размер H1 для длинного армянского текста */}
-          <h1 className={`
-            ${lang === 'AM' ? 'text-[8.5vw] tracking-[-0.05em]' : 'text-[11.5vw] tracking-tighter'} 
-            md:text-8xl lg:text-9xl font-black italic uppercase leading-[0.9] mb-6 break-words
+         {/* Ультимативное решение для армянского текста: правильный размер и на мобилке, и на ПК */}
+         <h1 className={`
+            ${lang === 'AM' 
+              ? 'text-[9.5vw] md:text-7xl lg:text-8xl tracking-[-0.05em]' 
+              : 'text-[11.5vw] md:text-8xl lg:text-9xl tracking-tighter'} 
+            font-black italic uppercase leading-[0.9] mb-6 break-words
           `}>
             {cur.heroTitle.split(' ')[0]} <br />
             <span className="text-transparent border-text">
